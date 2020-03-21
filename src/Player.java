@@ -3,7 +3,8 @@ import java.util.Scanner;
 
 /**
  * This is the only class you should edit.
- * @author You
+ * @author Noah Rosamilia
+ * @author Ian Spryn
  *
  */
 public class Player {
@@ -12,7 +13,7 @@ public class Player {
 	
 	// Delete this once you actually write your own version of the class.
 	private static Scanner scn = new Scanner(System.in);
-	
+
 	/**
 	 * This default constructor should be the only constructor you supply.
 	 */

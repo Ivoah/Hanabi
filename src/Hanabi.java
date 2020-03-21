@@ -283,7 +283,10 @@ public class Hanabi {
 				System.out.println("Player 1 hand: " + hands.get(1));
 				System.out.println("Board state: \n" + boardState);
 			}
+			// And decrement hints.
+			boardState.numHints--;
 			players.get(otherPlayer).tellNumberHint(number, indices, hands.get(currentPlayer), boardState);
+
 		}
 
 		else if (command.equals("COLORHINT")) {
@@ -307,7 +310,7 @@ public class Hanabi {
 			// Error if specified color not in other player's hand.
 			ArrayList<Integer> indices = new ArrayList<Integer>();
 			for (int i = 0; i < hands.get(otherPlayer).size(); i++) {
-				if (hands.get(otherPlayer).get(i).value == color) {
+				if (hands.get(otherPlayer).get(i).color == color) {
 					indices.add(i);
 				}
 			}
@@ -325,6 +328,8 @@ public class Hanabi {
 				System.out.println("Player 1 hand: " + hands.get(1));
 				System.out.println("Board state: \n" + boardState);
 			}
+			// And decrement hints.
+			boardState.numHints--;
 			players.get(otherPlayer).tellColorHint(color, indices, hands.get(currentPlayer), boardState);
 
 		}
