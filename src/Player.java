@@ -1,5 +1,4 @@
-import java.util.ArrayList;
-import java.util.Scanner;
+import java.util.*;
 
 /**
  * This is the only class you should edit.
@@ -8,17 +7,46 @@ import java.util.Scanner;
  *
  */
 public class Player {
+	class UnknownCard {
+		public ArrayList<Integer> possibleValues = new ArrayList<>();
+		public ArrayList<Integer> possibleColors = new ArrayList<>();
+
+		public UnknownCard() {
+			possibleValues.add(1);
+			possibleValues.add(2);
+			possibleValues.add(3);
+			possibleValues.add(4);
+			possibleValues.add(5);
+
+			possibleColors.add(Colors.RED);
+			possibleColors.add(Colors.YELLOW);
+			possibleColors.add(Colors.BLUE);
+			possibleColors.add(Colors.GREEN);
+			possibleColors.add(Colors.WHITE);
+		}
+	}
 	// Add whatever variables you want. You MAY NOT use static variables, or otherwise allow direct communication between
 	// different instances of this class by any means; doing so will result in a score of 0.
 	
 	// Delete this once you actually write your own version of the class.
 	private static Scanner scn = new Scanner(System.in);
+	private Random rand = new Random();
+
+	private ArrayList<UnknownCard> myHand = new ArrayList<>();
+	private ArrayList<UnknownCard> otherHand = new ArrayList<>();
+
+	private ArrayList<Card> discardPile = new ArrayList<>();
+
+	private Queue<Integer> playable = new LinkedList<>();
 
 	/**
 	 * This default constructor should be the only constructor you supply.
 	 */
 	public Player() {
-		
+		for (int i = 0; i < 5; i++) {
+			myHand.add(new UnknownCard());
+			otherHand.add(new UnknownCard());
+		}
 	}
 	
 	/**
@@ -33,7 +61,9 @@ public class Player {
 	 */
 	public void tellPartnerDiscard(Hand startHand, Card discard, int disIndex, Card draw, int drawIndex, 
 			Hand finalHand, Board boardState) {
-		
+		otherHand.remove(disIndex);
+		otherHand.add(drawIndex, new UnknownCard());
+		discardPile.add(discard);
 	}
 	
 	/**
@@ -53,12 +83,13 @@ public class Player {
 	 * @param draw The card she drew to replace it; null, if the deck was empty.
 	 * @param drawIndex The index to which she drew the new card.
 	 * @param finalHand The hand your partner ended with after playing.
-	 * @param wasLegalPLay Whether the play was legal or not.
+	 * @param wasLegalPlay Whether the play was legal or not.
 	 * @param boardState The state of the board after play.
 	 */
 	public void tellPartnerPlay(Hand startHand, Card play, int playIndex, Card draw, int drawIndex,
 			Hand finalHand, boolean wasLegalPlay, Board boardState) {
-		
+		otherHand.remove(playIndex);
+		otherHand.add(drawIndex, new UnknownCard());
 	}
 	
 	/**
@@ -79,7 +110,13 @@ public class Player {
 	 * @param boardState The state of the board after the hint.
 	 */
 	public void tellColorHint(int color, ArrayList<Integer> indices, Hand partnerHand, Board boardState) {
-		
+		if (indices.size() == 1) {
+			playable.add(indices.get(0));
+		}
+		for (int i : indices) {
+			myHand.get(i).possibleColors.clear();
+			myHand.get(i).possibleColors.add(color);
+		}
 	}
 	
 	/**
@@ -90,7 +127,13 @@ public class Player {
 	 * @param boardState The state of the board after the hint.
 	 */
 	public void tellNumberHint(int number, ArrayList<Integer> indices, Hand partnerHand, Board boardState) {
-		
+		if (indices.size() == 1) {
+			playable.add(indices.get(0));
+		}
+		for (int i : indices) {
+			myHand.get(i).possibleValues.clear();
+			myHand.get(i).possibleValues.add(number);
+		}
 	}
 	
 	/**
@@ -116,7 +159,11 @@ public class Player {
 	public String ask(int yourHandSize, Hand partnerHand, Board boardState) {
 		// Provided for testing purposes only; delete.
 		// Your method should construct and return a String without user input.
-		return scn.nextLine();
+		if (playable.size() > 0) {
+			int idx = playable.remove();
+			return String.format("PLAY %d 0", idx);
+		}
+		return String.format("DISCARD %d %d", rand.nextInt(5), 0);
 	}
 
 }
