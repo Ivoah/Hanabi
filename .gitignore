@@ -1,0 +1,10 @@
+.idea/
+.settings/
+out/
+bin/
+.idea_modules/
+*.class
+*.log
+.classpath
+.DS_Store
+*.iml
