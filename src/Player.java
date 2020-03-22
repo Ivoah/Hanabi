@@ -230,7 +230,7 @@ public class Player {
 
                 // If there is exactly 1 card left playable and I don't have the card
                 // and they don't already know what number this card is
-                if (cardCount == 1 && !sharedCard && !partnerAlreadyKnowsNumber(partnerCard, i)) {
+                if (cardCount == 1 && !sharedCard && !partnerAlreadyKnowsNumber(partnerHand, partnerCard.value)) {
                     // Update my local version of what I know they know with the new value
                     updateLocalPartnerCardNumber(partnerHand, partnerCard.value);
                     return "NUMBERHINT " + partnerHand.get(i).value;
@@ -394,7 +394,7 @@ public class Player {
     }
 
     /**
-     * Called whenever I tell my partner a hint about a number. This methods updates our local version of what I know
+     * Called whenever I tell my partner a hint about a number. This method updates our local version of what I know
      * my partner knows.
      *
      * @param partnerHand their current hand
@@ -412,7 +412,7 @@ public class Player {
     }
 
     /**
-     * Called whenever I tell my partner a hint about a color. This methods updates our local version of what I know
+     * Called whenever I tell my partner a hint about a color. This method updates our local version of what I know
      * my partner knows.
      *
      * @param partnerHand their current hand
