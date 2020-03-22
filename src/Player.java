@@ -1,5 +1,3 @@
-import com.sun.org.apache.xerces.internal.parsers.XML11NonValidatingConfiguration;
-
 import java.util.*;
 
 /**
@@ -460,7 +458,7 @@ public class Player {
                 return "NUMBERHINT " + mostCommonNumber;
             } else {
                 updateLocalPartnerCardColor(partnerHand, mostCommonColor);
-                return "COLORHINT" + mostCommonColor;
+                return "COLORHINT " + mostCommonColor;
             }
         }
 
