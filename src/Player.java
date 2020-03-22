@@ -1,3 +1,5 @@
+import com.sun.org.apache.xerces.internal.parsers.XML11NonValidatingConfiguration;
+
 import java.util.*;
 
 /**
@@ -147,8 +149,8 @@ public class Player {
         for (int index : indices) {
             myCards.get(index).setColor(color);
         }
-        // If true, then partner notified us of a single playable card, assuming there exists a card on the table that is one less
-        if (indices.size() == 1 && boardState.tableau.get(indices.get(0)) == indices.get(0) - 1) safeToPlay.add(indices.get(0));
+        // If true, then partner notified us of a single playable card
+        if (indices.size() == 1) safeToPlay.add(indices.get(0));
 
     }
 
@@ -165,7 +167,8 @@ public class Player {
             myCards.get(index).setValue(number);
         }
         // If true, then partner notified us of a single playable card, assuming there exists a card on the table that is one less
-        if (indices.size() == 1 && boardState.tableau.get(indices.get(0)) == indices.get(0) - 1) safeToPlay.add(indices.get(0));
+        if (indices.size() == 1 && boardState.tableau.get(indices.get(0)) == indices.get(0) - 1)
+            safeToPlay.add(indices.get(0));
     }
 
     /**
@@ -359,6 +362,74 @@ public class Player {
 
     private String partnerGiveHint(Hand partnerHand, Board boardState) {
         //Try to smartly give a hint. If we can hint such that only one card is pointed out, then GREAT! That's an instant play
+        for (int cardIndex = 0; cardIndex < partnerHand.size(); cardIndex++) {
+            try {
+                Card partnerCard = partnerHand.get(cardIndex);
+                // If partner has a playable card
+                if (boardState.tableau.get(partnerCard.color) == partnerCard.value - 1) {
+                    // Make sure that's the ONLY card (to make sure we're pointing to 1 card)
+                    boolean unique = true;
+                    for (int otherCardsIndex = 0; otherCardsIndex < partnerHand.size(); otherCardsIndex++) {
+                        if (otherCardsIndex == cardIndex) continue;
+                        if (partnerHand.get(otherCardsIndex).value == partnerCard.value)
+                            unique = false;
+                    }
+                    if (unique) {
+                        partnerCards.set(cardIndex, new Card(partnerCards.get(cardIndex).color, partnerCard.value));
+                        return "NUMBERHINT " + partnerCard.value;
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        //Try to find a hint that will point to the most number of cards possible
+        int mostCommonNumber = 0;
+        int mostCommonColor = 0;
+        for (int number = 1; number <= 5; number++) {
+            int numberCount = 0;
+            for (int cardIndex = 0; cardIndex < partnerHand.size(); cardIndex++) {
+                try {
+                    // If it's the same color and the partner doesn't know the number of the card
+                    if (partnerHand.get(cardIndex).value == number
+                    && partnerCards.get(cardIndex).value != number)
+                        numberCount++;
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+            if (numberCount > mostCommonNumber)
+                mostCommonNumber = numberCount;
+        }
+        for (int color = 0; color < 5; color++) {
+            int colorCount = 0;
+            for (int cardIndex = 0; cardIndex < partnerHand.size(); cardIndex++) {
+                try {
+                    // If it's the same color and the partner doesn't know the color of the card
+                    if (partnerHand.get(cardIndex).color == color
+                    && partnerCards.get(cardIndex).color != color) {
+                        colorCount++;
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+            if (colorCount > mostCommonColor)
+                mostCommonColor = colorCount;
+        }
+
+        if (mostCommonNumber > 1 || mostCommonColor > 1) {
+            // Prioritize number of color
+            if (mostCommonNumber >= mostCommonColor) {
+                updateLocalPartnerCardNumber(partnerHand, mostCommonNumber);
+                return "NUMBERHINT " + mostCommonNumber;
+            } else {
+                updateLocalPartnerCardColor(partnerHand, mostCommonColor);
+                return "COLORHINT" + mostCommonColor;
+            }
+        }
+
         //TODO
         return null;
     }
