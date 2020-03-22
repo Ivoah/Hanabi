@@ -124,8 +124,8 @@ public class Player {
         for (int index : indices) {
             myCards.set(index, new Card(color, myCards.get(index).value));
         }
-        // If true, then partner notified us of a single playable card
-        if (indices.size() == 1) safeToPlay.add(indices.get(0));
+        // If true, then partner notified us of a single playable card, assuming there exists a card on the table that is one less
+        if (indices.size() == 1 && boardState.tableau.get(indices.get(0)) == indices.get(0) - 1) safeToPlay.add(indices.get(0));
 
     }
 
@@ -141,8 +141,8 @@ public class Player {
         for (int index : indices) {
             myCards.set(index, new Card(myCards.get(index).color, number));
         }
-        // If true, then partner notified us of a single playable card
-        if (indices.size() == 1) safeToPlay.add(indices.get(0));
+        // If true, then partner notified us of a single playable card, assuming there exists a card on the table that is one less
+        if (indices.size() == 1 && boardState.tableau.get(indices.get(0)) == indices.get(0) - 1) safeToPlay.add(indices.get(0));
     }
 
     /**
