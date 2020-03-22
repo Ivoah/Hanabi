@@ -1,4 +1,5 @@
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 
 /**
@@ -10,7 +11,10 @@ import java.util.Scanner;
 public class Player {
 	// Add whatever variables you want. You MAY NOT use static variables, or otherwise allow direct communication between
 	// different instances of this class by any means; doing so will result in a score of 0.
-	
+	private List<Card> myCards;
+	private Hand partnerHand;
+
+
 	// Delete this once you actually write your own version of the class.
 	private static Scanner scn = new Scanner(System.in);
 
@@ -18,9 +22,12 @@ public class Player {
 	 * This default constructor should be the only constructor you supply.
 	 */
 	public Player() {
-		
+		myCards = new ArrayList<>();
+		for (int i = 0; i < 5; i++) {
+			myCards.add(new Card(-1, -1));
+		}
 	}
-	
+
 	/**
 	 * This method runs whenever your partner discards a card.
 	 * @param startHand The hand your partner started with before discarding.
@@ -31,11 +38,11 @@ public class Player {
 	 * @param finalHand The hand your partner ended with after redrawing.
 	 * @param boardState The state of the board after play.
 	 */
-	public void tellPartnerDiscard(Hand startHand, Card discard, int disIndex, Card draw, int drawIndex, 
+	public void tellPartnerDiscard(Hand startHand, Card discard, int disIndex, Card draw, int drawIndex,
 			Hand finalHand, Board boardState) {
-		
+		partnerHand = finalHand;
 	}
-	
+
 	/**
 	 * This method runs whenever you discard a card, to let you know what you discarded.
 	 * @param discard The card you discarded.
@@ -44,7 +51,7 @@ public class Player {
 	public void tellYourDiscard(Card discard, Board boardState) {
 		
 	}
-	
+
 	/**
 	 * This method runs whenever your partner played a card
 	 * @param startHand The hand your partner started with before playing.
@@ -53,14 +60,14 @@ public class Player {
 	 * @param draw The card she drew to replace it; null, if the deck was empty.
 	 * @param drawIndex The index to which she drew the new card.
 	 * @param finalHand The hand your partner ended with after playing.
-	 * @param wasLegalPLay Whether the play was legal or not.
+	 * @param wasLegalPlay Whether the play was legal or not.
 	 * @param boardState The state of the board after play.
 	 */
 	public void tellPartnerPlay(Hand startHand, Card play, int playIndex, Card draw, int drawIndex,
 			Hand finalHand, boolean wasLegalPlay, Board boardState) {
-		
+		partnerHand = finalHand;
 	}
-	
+
 	/**
 	 * This method runs whenever you play a card, to let you know what you played.
 	 * @param play The card you played.
@@ -68,9 +75,9 @@ public class Player {
 	 * @param boardState The state of the board after play.
 	 */
 	public void tellYourPlay(Card play, boolean wasLegalPlay, Board boardState) {
-		
+
 	}
-	
+
 	/**
 	 * This method runs whenever your partner gives you a hint as to the color of your cards.
 	 * @param color The color hinted, from Colors.java: RED, YELLOW, BLUE, GREEN, or WHITE.
@@ -79,9 +86,11 @@ public class Player {
 	 * @param boardState The state of the board after the hint.
 	 */
 	public void tellColorHint(int color, ArrayList<Integer> indices, Hand partnerHand, Board boardState) {
-		
+		for (int index : indices) {
+			myCards.set(index, new Card(color, myCards.get(index).value));
+		}
 	}
-	
+
 	/**
 	 * This method runs whenever your partner gives you a hint as to the numbers on your cards.
 	 * @param number The number hinted, from 1-5.
@@ -90,9 +99,11 @@ public class Player {
 	 * @param boardState The state of the board after the hint.
 	 */
 	public void tellNumberHint(int number, ArrayList<Integer> indices, Hand partnerHand, Board boardState) {
-		
+		for (int index : indices) {
+			myCards.set(index, new Card(myCards.get(index).color, number));
+		}
 	}
-	
+
 	/**
 	 * This method runs when the game asks you for your next move.
 	 * @param yourHandSize How many cards you have in hand.
