@@ -34,7 +34,7 @@ public class Player {
     // Used to keep track of what I know my partner knows
     private List<Card> partnerCards;
     //used to keep track of the single card that was hinted (which means it's immediately playable)
-    private int singleCardHintIndex;
+    private Queue<Integer> safeToPlay = new LinkedList<>();
 
 
     // Delete this once you actually write your own version of the class.
@@ -44,7 +44,6 @@ public class Player {
      * This default constructor should be the only constructor you supply.
      */
     public Player() {
-        singleCardHintIndex = -1;
         myCards = new ArrayList<>();
         partnerCards = new ArrayList<>();
         for (int i = 0; i < 5; i++) {
@@ -126,7 +125,7 @@ public class Player {
             myCards.set(index, new Card(color, myCards.get(index).value));
         }
         // If true, then partner notified us of a single playable card
-        if (indices.size() == 1) singleCardHintIndex = indices.get(0);
+        if (indices.size() == 1) safeToPlay.add(indices.get(0));
 
     }
 
@@ -143,7 +142,7 @@ public class Player {
             myCards.set(index, new Card(myCards.get(index).color, number));
         }
         // If true, then partner notified us of a single playable card
-        if (indices.size() == 1) singleCardHintIndex = indices.get(0);
+        if (indices.size() == 1) safeToPlay.add(indices.get(0));
     }
 
     /**
@@ -301,9 +300,8 @@ public class Player {
 
     private String selfCanPlayCard(List<Card> myCards, Board boardState) {
         // If a previous hint has pointed to a single card
-        if (singleCardHintIndex != -1) {
-            int num = singleCardHintIndex;
-            singleCardHintIndex = -1; //reset
+        if (safeToPlay.size() > 0) {
+            int num = safeToPlay.remove();
             myCards.remove(num);
             //if there's another available card to pull from, then "add" it to my local list of cards
             if (boardState.deckSize > 1)
