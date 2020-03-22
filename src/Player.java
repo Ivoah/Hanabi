@@ -24,13 +24,36 @@ public class Player {
             possibleColors.add(Colors.GREEN);
             possibleColors.add(Colors.WHITE);
         }
+
+        public void setValue(int value) {
+            possibleValues.clear();
+            possibleValues.add(value);
+        }
+
+        public void setColor(int color) {
+            possibleColors.clear();
+            possibleColors.add(color);
+        }
+
+        public int maxValue() {
+            return Collections.max(possibleValues);
+        }
+
+        public int minValue() {
+            return Collections.min(possibleValues);
+        }
+
+        public int onlyValue() {
+            if (possibleValues.size() > 1) return -1;
+            return possibleValues.get(0);
+        }
     }
 
     // Add whatever variables you want. You MAY NOT use static variables, or otherwise allow direct communication between
     // different instances of this class by any means; doing so will result in a score of 0.
 
     // Used to keep track of what I know
-    private List<Card> myCards;
+    private List<UnknownCard> myCards;
     // Used to keep track of what I know my partner knows
     private List<Card> partnerCards;
     //used to keep track of the single card that was hinted (which means it's immediately playable)
@@ -47,7 +70,7 @@ public class Player {
         myCards = new ArrayList<>();
         partnerCards = new ArrayList<>();
         for (int i = 0; i < 5; i++) {
-            myCards.add(new Card(-1, -1));
+            myCards.add(new UnknownCard());
             partnerCards.add(new Card(-1, -1));
         }
     }
@@ -122,7 +145,7 @@ public class Player {
      */
     public void tellColorHint(int color, ArrayList<Integer> indices, Hand partnerHand, Board boardState) {
         for (int index : indices) {
-            myCards.set(index, new Card(color, myCards.get(index).value));
+            myCards.get(index).setColor(color);
         }
         // If true, then partner notified us of a single playable card, assuming there exists a card on the table that is one less
         if (indices.size() == 1 && boardState.tableau.get(indices.get(0)) == indices.get(0) - 1) safeToPlay.add(indices.get(0));
@@ -139,7 +162,7 @@ public class Player {
      */
     public void tellNumberHint(int number, ArrayList<Integer> indices, Hand partnerHand, Board boardState) {
         for (int index : indices) {
-            myCards.set(index, new Card(myCards.get(index).color, number));
+            myCards.get(index).setValue(number);
         }
         // If true, then partner notified us of a single playable card, assuming there exists a card on the table that is one less
         if (indices.size() == 1 && boardState.tableau.get(indices.get(0)) == indices.get(0) - 1) safeToPlay.add(indices.get(0));
@@ -264,62 +287,70 @@ public class Player {
         return null;
     }
 
-    private String selfDisposeCard(List<Card> myCards, Board boardState) {
+    private String selfDisposeCard(List<UnknownCard> myCards, Board boardState) {
         //Do I have any cards that are already played on the table?
         for (int cardIndex = 0; cardIndex < myCards.size(); cardIndex++) {
-            Card myCard = myCards.get(cardIndex);
-            if (myCard.color == -1 || myCard.value == -1) continue;
-            //if I contain a card that is the number or lower than what is already on the table
-            if (myCard.value <= boardState.tableau.get(myCard.color)) {
-                myCards.remove(myCard);
-                if (boardState.deckSize > 1)
-                    myCards.add(cardIndex, new Card(-1, -1));
-                return "DISCARD " + cardIndex + " " + cardIndex;
+            UnknownCard myCard = myCards.get(cardIndex);
+            for (int color : myCard.possibleColors) {
+                //if I contain a card that is the number or lower than what is already on the table
+                if (myCard.maxValue() <= boardState.tableau.get(color)) {
+                    myCards.remove(myCard);
+                    if (boardState.deckSize > 1)
+                        myCards.add(cardIndex, new UnknownCard());
+                    return "DISCARD " + cardIndex + " " + cardIndex;
+                }
             }
         }
 
         //Were any cards previously disposed such that now some cards are useless to have?
         for (int cardIndex = 0; cardIndex < myCards.size(); cardIndex++) {
-            Card myCard = myCards.get(cardIndex);
+            UnknownCard myCard = myCards.get(cardIndex);
             // Check for cards lower than mine that have been completely discarded.
             // If I Find something, then it's impossible to play myCard.
-            for (int i = 1; i < myCard.value; i++) {
-                Card card = new Card(myCard.color, i);
-                int cardCount = cardCount(i);
-                //Count the number of instances of a given card in the discard pile
-                for (Card discard : boardState.discards)
-                    if (discard.equals(card))
-                        cardCount--;
-                // If true, all instances of this card are discarded, so all cards higher than it don't matter
-                if (cardCount == 0)
-                    return "DISCARD " + cardIndex + " " + cardIndex;
+            for (int color : myCard.possibleColors) {
+                for (int i = 1; i < myCard.minValue(); i++) {
+                    Card card = new Card(color, i);
+                    int cardCount = cardCount(i);
+                    //Count the number of instances of a given card in the discard pile
+                    for (Card discard : boardState.discards)
+                        if (discard.equals(card))
+                            cardCount--;
+                    // If true, all instances of this card are discarded, so all cards higher than it don't matter
+                    if (cardCount == 0)
+                        return "DISCARD " + cardIndex + " " + cardIndex;
+                }
             }
         }
         return null;
     }
 
-    private String selfCanPlayCard(List<Card> myCards, Board boardState) {
+    private String selfCanPlayCard(List<UnknownCard> myCards, Board boardState) {
         // If a previous hint has pointed to a single card
         if (safeToPlay.size() > 0) {
             int num = safeToPlay.remove();
             myCards.remove(num);
             //if there's another available card to pull from, then "add" it to my local list of cards
             if (boardState.deckSize > 1)
-                myCards.add(num, new Card(-1, -1));
+                myCards.add(num, new UnknownCard());
             // Play it! And put the new card in its place
             return "PLAY " + num + " " + num;
         }
 
         //Can I lay down a card on top of another (or start a new stack)?
         for (int cardIndex = 0; cardIndex < myCards.size(); cardIndex++) {
-            Card myCard = myCards.get(cardIndex);
-            if (myCard.color == -1 || myCard.value == -1) continue; // Incomplete information
+            UnknownCard myCard = myCards.get(cardIndex);
             // For a given color, if the table card is one less than what I have in my hand, PLAY IT
-            if (boardState.tableau.get(myCard.color) == myCard.value - 1) {
+            boolean all = true;
+            for (int color : myCard.possibleColors) {
+                if (boardState.tableau.get(color) != myCard.onlyValue() - 1) {
+                    all = false;
+                }
+            }
+            if (all) {
                 myCards.remove(cardIndex);
                 //if there's another available card to pull from, then "add" it to my local list of cards
                 if (boardState.deckSize > 1)
-                    myCards.add(cardIndex, new Card(-1, -1));
+                    myCards.add(cardIndex, new UnknownCard());
                 return "PLAY " + cardIndex + " " + cardIndex;
             }
         }
@@ -333,12 +364,12 @@ public class Player {
     }
 
     //We tried to be smart earlier. We couldn't. Pick a random card.
-    private String selfDisposeRandomCard(List<Card> myCards, Board boardState) {
+    private String selfDisposeRandomCard(List<UnknownCard> myCards, Board boardState) {
         int index = new Random().nextInt(myCards.size());
         myCards.remove(index);
         //if there's another available card to pull from, then "add" it to my local list of cards
         if (boardState.deckSize > 1)
-            myCards.add(index, new Card(-1, -1));
+            myCards.add(index, new UnknownCard());
         return "DISCARD " + index + " " + index;
     }
 
