@@ -219,14 +219,14 @@ public class Player {
             try {
                 Card partnerCard = partnerHand.get(i);
                 int cardCount = cardCount(partnerCard.value); //get the total number of cards that exist for this number
-                boolean sharedCard = false;
 
                 // If the same card is in the discarded pile
-                if (boardState.discards.contains(partnerCard))
-                    // Decrement the number of cards left to play
-                    cardCount--;
+                for (Card discardCard : boardState.discards)
+                    if (discardCard.equals(partnerCard))
+                        // Decrement the number of cards left to play
+                        cardCount--;
                 // Look through my own hand for the same card
-                sharedCard = myCards.contains(partnerCard);
+                boolean sharedCard = myCards.contains(partnerCard);
 
                 // If there is exactly 1 card left playable and I don't have the card
                 // and they don't already know what number this card is
@@ -269,7 +269,7 @@ public class Player {
         //Do I have any cards that are already played on the table?
         for (int cardIndex = 0; cardIndex < myCards.size(); cardIndex++) {
             Card myCard = myCards.get(cardIndex);
-            if (myCard.color == -1) continue;
+            if (myCard.color == -1 || myCard.value == -1) continue;
             //if I contain a card that is the number or lower than what is already on the table
             if (myCard.value <= boardState.tableau.get(myCard.color)) {
                 myCards.remove(myCard);
