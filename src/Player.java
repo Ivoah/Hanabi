@@ -12,7 +12,6 @@ public class Player {
 	// Add whatever variables you want. You MAY NOT use static variables, or otherwise allow direct communication between
 	// different instances of this class by any means; doing so will result in a score of 0.
 	private List<Card> myCards;
-	private Hand partnerHand;
 
 
 	// Delete this once you actually write your own version of the class.
@@ -40,7 +39,6 @@ public class Player {
 	 */
 	public void tellPartnerDiscard(Hand startHand, Card discard, int disIndex, Card draw, int drawIndex,
 			Hand finalHand, Board boardState) {
-		partnerHand = finalHand;
 	}
 
 	/**
@@ -49,7 +47,7 @@ public class Player {
 	 * @param boardState The state of the board after play.
 	 */
 	public void tellYourDiscard(Card discard, Board boardState) {
-		
+
 	}
 
 	/**
@@ -65,7 +63,6 @@ public class Player {
 	 */
 	public void tellPartnerPlay(Hand startHand, Card play, int playIndex, Card draw, int drawIndex,
 			Hand finalHand, boolean wasLegalPlay, Board boardState) {
-		partnerHand = finalHand;
 	}
 
 	/**
