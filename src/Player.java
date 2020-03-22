@@ -30,7 +30,7 @@ public class Player {
     private List<Card> myCards;
     // Used to keep track of what I know my partner knows
     private List<Card> partnerCards;
-    //used to keep track of the single card that was hinted (which means it's playable)
+    //used to keep track of the single card that was hinted (which means it's immediately playable)
     private int singleCardHintIndex;
 
 
@@ -167,6 +167,11 @@ public class Player {
     public String ask(int yourHandSize, Hand partnerHand, Board boardState) {
         String action;
 
+        //update myCards with any new knowledge that can be inferred from what is available
+        selfInferNewKnowledge();
+        //update partnerCards with any new knowledge that can be inferred from what is available
+        partnerInferNewKnowledge();
+
         // Check if partner has a card they really shouldn't throw out
         action = partnerShouldNotDisposeCard(partnerHand, boardState);
         if (action != null) return action;
@@ -195,6 +200,14 @@ public class Player {
         // Provided for testing purposes only; delete.
         // Your method should construct and return a String without user input.
 //        return scn.nextLine();
+    }
+
+    private void selfInferNewKnowledge() {
+        //TODO
+    }
+
+    private void partnerInferNewKnowledge() {
+        //TODO
     }
 
     private String partnerShouldNotDisposeCard(Hand partnerHand, Board boardState) {
@@ -246,22 +259,36 @@ public class Player {
     }
 
     private String selfDisposeCard(List<Card> myCards, Board boardState) {
-        //Are there any duplicate cards?
-        for (int i = 0; i < myCards.size(); i++) {
-            Card myCard = myCards.get(i);
+        //Do I have any cards that are already played on the table?
+        for (int cardIndex = 0; cardIndex < myCards.size(); cardIndex++) {
+            Card myCard = myCards.get(cardIndex);
             if (myCard.color == 1) continue;
             //if I contain a card that is the number or lower than what is already on the table
             if (myCard.value <= boardState.tableau.get(myCard.color)) {
                 myCards.remove(myCard);
                 if (boardState.deckSize > 1)
-                    myCards.add(i, new Card(-1, -1));
-                return "DISCARD " + i + " " + i;
+                    myCards.add(cardIndex, new Card(-1, -1));
+                return "DISCARD " + cardIndex + " " + cardIndex;
             }
-
         }
-        //Do I have any cards that are lower than what is currently on the board for a given color?
-        //Were any cards previously disposed such that now it some cards are useless to have?
-        //TODO
+
+        //Were any cards previously disposed such that now some cards are useless to have?
+        for (int cardIndex = 0; cardIndex < myCards.size(); cardIndex++) {
+            Card myCard = myCards.get(cardIndex);
+            // Check for cards lower than mine that have been completely discarded.
+            // If I Find something, then it's impossible to play myCard.
+            for (int i = 1; i < myCard.value; i++) {
+                Card card = new Card(myCard.color, i);
+                int cardCount = cardCount(i);
+                //Count the number of instances of a given card in the discard pile
+                for (Card discard : boardState.discards)
+                    if (discard.equals(card))
+                        cardCount--;
+                // If true, all instances of this card are discarded, so all cards higher than it don't matter
+                if (cardCount == 0)
+                    return "DISCARD " + cardIndex + " " + cardIndex;
+            }
+        }
         return null;
     }
 
