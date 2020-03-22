@@ -1,6 +1,4 @@
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Scanner;
+import java.util.*;
 
 /**
  * This is the only class you should edit.
@@ -9,6 +7,24 @@ import java.util.Scanner;
  * @author Ian Spryn
  */
 public class Player {
+    class UnknownCard {
+		public ArrayList<Integer> possibleValues = new ArrayList<>();
+		public ArrayList<Integer> possibleColors = new ArrayList<>();
+
+		public UnknownCard() {
+			possibleValues.add(1);
+			possibleValues.add(2);
+			possibleValues.add(3);
+			possibleValues.add(4);
+			possibleValues.add(5);
+
+			possibleColors.add(Colors.RED);
+			possibleColors.add(Colors.YELLOW);
+			possibleColors.add(Colors.BLUE);
+			possibleColors.add(Colors.GREEN);
+			possibleColors.add(Colors.WHITE);
+		}
+	}
     // Add whatever variables you want. You MAY NOT use static variables, or otherwise allow direct communication between
     // different instances of this class by any means; doing so will result in a score of 0.
     private List<Card> myCards;
