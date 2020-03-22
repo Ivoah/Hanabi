@@ -216,9 +216,9 @@ public class Player {
         for (int i = 0; i < partnerHand.size(); i++) {
             try {
                 Card partnerCard = partnerHand.get(i);
-                // If partner contains another card of the same color that is already on top of a stack on the table
+                // If partner contains another card of the same color that is already on the table
                 // and they don't already know what color color this card is
-                if (partnerCard.value == boardState.tableau.get(partnerCard.color) && !partnerAlreadyKnowsColor(partnerCard, i))
+                if (partnerCard.value <= boardState.tableau.get(partnerCard.color) && !partnerAlreadyKnowsColor(partnerCard, i))
                     //update my local version of what I know they know with the new color
                     updateLocalPartnerCardColor(i, partnerCard.color);
                 return "COLORHINT " + partnerCard.color;
@@ -231,6 +231,18 @@ public class Player {
 
     private String selfDisposeCard(List<Card> myCards, Board boardState) {
         //Are there any duplicate cards?
+        for (int i = 0; i < myCards.size(); i++) {
+            Card myCard = myCards.get(i);
+            if (myCard.color == 1) continue;
+            //if I contain a card that is the number or lower than what is already on the table
+            if (myCard.value <= boardState.tableau.get(myCard.color)) {
+                myCards.remove(myCard);
+                if (boardState.deckSize > 1)
+                    myCards.add(i, new Card(-1, -1));
+                return "DISCARD " + i + " " + i;
+            }
+
+        }
         //Do I have any cards that are lower than what is currently on the board for a given color?
         //Were any cards previously disposed such that now it some cards are useless to have?
         //TODO
