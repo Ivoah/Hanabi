@@ -103,6 +103,7 @@ public class Hanabi {
 			}
 			catch (Exception e) {
 				System.out.println(e);
+				e.printStackTrace();
 				if (chatty) {
 					System.out.println("Error; Score: 0");
 				}

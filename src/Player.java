@@ -253,19 +253,23 @@ public class Player {
     private void selfInferNewKnowledge(Hand partnerHand, Board boardState) {
         for (UnknownCard card : myCards) {
             if (card.onlyValue() != -1) {
+                List<Integer> axe = new ArrayList<>();
                 for (int color : card.possibleColors) {
                     if (cardsLeft(color, card.onlyValue(), partnerHand, boardState) == 0) {
-                        card.possibleColors.remove(Integer.valueOf(color));
+                        axe.add(color);
                     }
                 }
+                card.possibleColors.removeAll(axe);
             }
 
             if (card.onlyColor() != -1) {
+                List<Integer> axe = new ArrayList<>();
                 for (int value : card.possibleValues) {
                     if (cardsLeft(card.onlyColor(), value, partnerHand, boardState) == 0) {
-                        card.possibleValues.remove(Integer.valueOf(value));
+                        axe.add(value);
                     }
                 }
+                card.possibleValues.removeAll(axe);
             }
         }
     }
