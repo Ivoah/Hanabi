@@ -49,6 +49,11 @@ public class Player {
             if (possibleValues.size() > 1) return -1;
             return possibleValues.get(0);
         }
+
+        public int onlyColor() {
+            if (possibleColors.size() > 1) return -1;
+            return possibleColors.get(0);
+        }
     }
 
     // Add whatever variables you want. You MAY NOT use static variables, or otherwise allow direct communication between
@@ -146,8 +151,9 @@ public class Player {
      * @param boardState  The state of the board after the hint.
      */
     public void tellColorHint(int color, ArrayList<Integer> indices, Hand partnerHand, Board boardState) {
-        for (int index : indices) {
-            myCards.get(index).setColor(color);
+        for (int i = 0; i < myCards.size(); i++) {
+            if (indices.contains(i)) myCards.get(i).setColor(color);
+            else myCards.get(i).possibleColors.remove(Integer.valueOf(color));
         }
         // If true, then partner notified us of a single playable card
         if (indices.size() == 1) safeToPlay.add(indices.get(0));
@@ -163,8 +169,9 @@ public class Player {
      * @param boardState  The state of the board after the hint.
      */
     public void tellNumberHint(int number, ArrayList<Integer> indices, Hand partnerHand, Board boardState) {
-        for (int index : indices) {
-            myCards.get(index).setValue(number);
+        for (int i = 0; i < myCards.size(); i++) {
+            if (indices.contains(i)) myCards.get(i).setValue(number);
+            else myCards.get(i).possibleValues.remove(Integer.valueOf(number));
         }
         // If true, then partner notified us of a single playable card, assuming there exists a card on the table that is one less
         if (indices.size() == 1 && boardState.tableau.get(indices.get(0)) == indices.get(0) - 1)
@@ -196,9 +203,7 @@ public class Player {
         String action;
 
         // Update myCards with any new knowledge that can be inferred from what is available
-        selfInferNewKnowledge();
-        // Update partnerCards with any new knowledge that can be inferred from what is available
-        partnerInferNewKnowledge();
+        selfInferNewKnowledge(partnerHand, boardState);
 
         // Check if partner has a card they really shouldn't throw out
         action = partnerShouldNotDisposeCard(partnerHand, boardState);
@@ -230,12 +235,41 @@ public class Player {
 //        return scn.nextLine();
     }
 
-    private void selfInferNewKnowledge() {
-        //TODO
+    private int cardsLeft(int color, int value, Hand partnerHand, Board boardState) {
+        int left = cardCount(value);
+        for (int i = 0; i < partnerHand.size(); i++) {
+            try {
+                Card card = partnerHand.get(i);
+                if (card.color == color && card.value == value) left--;
+            } catch (Exception e) {
+                // pass
+            }
+        }
+        for (Card card : boardState.discards) {
+            if (card.color == color && card.value == value) left--;
+        }
+
+        return left;
     }
 
-    private void partnerInferNewKnowledge() {
-        //TODO
+    private void selfInferNewKnowledge(Hand partnerHand, Board boardState) {
+        for (UnknownCard card : myCards) {
+            if (card.onlyValue() != -1) {
+                for (int color : card.possibleColors) {
+                    if (cardsLeft(color, card.onlyValue(), partnerHand, boardState) == 0) {
+                        card.possibleColors.remove(Integer.valueOf(color));
+                    }
+                }
+            }
+
+            if (card.onlyColor() != -1) {
+                for (int value : card.possibleValues) {
+                    if (cardsLeft(card.onlyColor(), value, partnerHand, boardState) == 0) {
+                        card.possibleValues.remove(Integer.valueOf(value));
+                    }
+                }
+            }
+        }
     }
 
     private String partnerShouldNotDisposeCard(Hand partnerHand, Board boardState) {
