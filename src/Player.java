@@ -423,7 +423,9 @@ public class Player {
 
         //Try to find a hint that will point to the most number of cards possible
         int mostCommonNumber = 0;
+        int greatestNumberCount = 0;
         int mostCommonColor = 0;
+        int greatestColorCount = 0;
         for (int number = 1; number <= 5; number++) {
             int numberCount = 0;
             for (int cardIndex = 0; cardIndex < partnerHand.size(); cardIndex++) {
@@ -436,8 +438,8 @@ public class Player {
                     e.printStackTrace();
                 }
             }
-            if (numberCount > mostCommonNumber)
-                mostCommonNumber = numberCount;
+            if (numberCount > greatestNumberCount)
+                mostCommonNumber = number;
         }
         for (int color = 0; color < 5; color++) {
             int colorCount = 0;
@@ -452,8 +454,8 @@ public class Player {
                     e.printStackTrace();
                 }
             }
-            if (colorCount > mostCommonColor)
-                mostCommonColor = colorCount;
+            if (colorCount > greatestColorCount)
+                mostCommonColor = color;
         }
 
         if (mostCommonNumber > 1 || mostCommonColor > 1) {
