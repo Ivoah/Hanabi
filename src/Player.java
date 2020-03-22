@@ -397,6 +397,7 @@ public class Player {
     }
 
     private String partnerGiveHint(Hand partnerHand, Board boardState) {
+        if (boardState.numHints == 0) return null;
         //Try to smartly give a hint. If we can hint such that only one card is pointed out, then GREAT! That's an instant play
         for (int cardIndex = 0; cardIndex < partnerHand.size(); cardIndex++) {
             try {
