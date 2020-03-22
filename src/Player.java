@@ -12,6 +12,10 @@ public class Player {
     // Add whatever variables you want. You MAY NOT use static variables, or otherwise allow direct communication between
     // different instances of this class by any means; doing so will result in a score of 0.
     private List<Card> myCards;
+    // Used to keep track of what I know my partner knows
+    private List<Card> partnerCards;
+    //used to keep track of the single card that was hinted (which means it's playable)
+    private int singleCardHintIndex;
 
 
     // Delete this once you actually write your own version of the class.
@@ -21,9 +25,12 @@ public class Player {
      * This default constructor should be the only constructor you supply.
      */
     public Player() {
+        singleCardHintIndex = -1;
         myCards = new ArrayList<>();
+        partnerCards = new ArrayList<>();
         for (int i = 0; i < 5; i++) {
             myCards.add(new Card(-1, -1));
+            partnerCards.add(new Card(-1, -1));
         }
     }
 
@@ -40,6 +47,9 @@ public class Player {
      */
     public void tellPartnerDiscard(Hand startHand, Card discard, int disIndex, Card draw, int drawIndex,
                                    Hand finalHand, Board boardState) {
+        partnerCards.remove(disIndex);
+        if (draw != null)
+            partnerCards.add(drawIndex, new Card(-1, -1));
     }
 
     /**
@@ -66,6 +76,11 @@ public class Player {
      */
     public void tellPartnerPlay(Hand startHand, Card play, int playIndex, Card draw, int drawIndex,
                                 Hand finalHand, boolean wasLegalPlay, Board boardState) {
+        partnerCards.remove(playIndex);
+        if (draw != null) {
+            partnerCards.add(drawIndex, new Card(-1, -1));
+        }
+
     }
 
     /**
@@ -91,6 +106,9 @@ public class Player {
         for (int index : indices) {
             myCards.set(index, new Card(color, myCards.get(index).value));
         }
+        // If true, then partner notified us of a single playable card
+        if (indices.size() == 1) singleCardHintIndex = indices.get(0);
+
     }
 
     /**
@@ -105,6 +123,8 @@ public class Player {
         for (int index : indices) {
             myCards.set(index, new Card(myCards.get(index).color, number));
         }
+        // If true, then partner notified us of a single playable card
+        if (indices.size() == 1) singleCardHintIndex = indices.get(0);
     }
 
     /**
@@ -131,45 +151,124 @@ public class Player {
     public String ask(int yourHandSize, Hand partnerHand, Board boardState) {
         String action;
 
-        action = shouldNotDisposeExists(partnerHand, boardState);
+        // Check if partner has a card they really shouldn't throw out
+        action = partnerShouldNotDisposeCard(partnerHand, boardState);
         if (action != null) return action;
+
+        // Check if partner has an identical card in color that is already on the table.
+        // This helps avoid using up a fuse
+        action = partnerShouldDisposeCard(partnerHand, boardState);
+        if (action != null) return action;
+
+        // Try to dispose a card first to get back a hint if we know we absolutely can
+        action = selfDisposeCard(myCards, boardState);
+        if (action != null) return action;
+
+        // Try to play a card
+        action = selfCanPlayCard(myCards, boardState);
+        if (action != null) return action;
+
+        //Give a general hint
+        action = partnerGiveHint(partnerHand, boardState);
+        if (action != null) return action;
+
+        // Fallback. Get rid of a random card
+        return selfDisposeRandomCard(myCards, boardState);
 
 
         // Provided for testing purposes only; delete.
         // Your method should construct and return a String without user input.
-        return scn.nextLine();
+//        return scn.nextLine();
     }
 
-    /**
-     * Checks to see if there is a card that should not be disposed, starting with the lowest card
-     *
-     * @param partnerHand Your partner's current hand.
-     * @param boardState  The current state of the board.
-     * @return a string encoding a command if there is one
-     */
-    private String shouldNotDisposeExists(Hand partnerHand, Board boardState) {
-        for (int cardNum = 1; cardNum <= 5; cardNum++) {
-            int cardCount = cardCount(cardNum);
-            for (int color = 0; color < 5; color++) {
-                for (Card card : boardState.discards) {
-                    //if the same card is in the discarded pile
-                    if (card.color == color && card.value == cardNum)
-                        //decrement the number of cards left to play
-                        cardCount--;
+    private String partnerShouldNotDisposeCard(Hand partnerHand, Board boardState) {
+        if (boardState.numHints == 0) return null;
+        for (int i = 0; i < partnerHand.size(); i++) {
+            try {
+                Card partnerCard = partnerHand.get(i);
+                int cardCount = cardCount(partnerCard.value); //get the total number of cards that exist for this number
+                boolean sharedCard = false;
+
+                // If the same card is in the discarded pile
+                if (boardState.discards.contains(partnerCard))
+                    // Decrement the number of cards left to play
+                    cardCount--;
+                // Look through my own hand for the same card
+                sharedCard = myCards.contains(partnerCard);
+
+                // If there is exactly 1 card left playable and I don't have the card
+                // and they don't already know what number this card is
+                if (cardCount == 1 && !sharedCard && !partnerAlreadyKnowsNumber(partnerCard, i)) {
+                    // Update my local version of what I know they know with the new value
+                    updateLocalPartnerCardNumber(i, partnerCard.value);
+                    return "NUMBERHINT " + partnerHand.get(i).value;
                 }
-                //look through my own hand for the same card
-                for (Card card : myCards)
-                    //if the same card is in my hand
-                    if (card.color == color && card.value == cardNum)
-                        //decrement the number of cards left to play
-                        cardCount--;
+            } catch (Exception e) {
+                e.printStackTrace();
             }
 
-            //if there is exactly 1 card left playable
-            if (cardCount == 1) return "NUMBERHINT " + cardNum;
         }
         return null;
     }
+
+    private String partnerShouldDisposeCard(Hand partnerHand, Board boardState) {
+        if (boardState.numHints == 0) return null;
+        for (int i = 0; i < partnerHand.size(); i++) {
+            try {
+                Card partnerCard = partnerHand.get(i);
+                // If partner contains another card of the same color that is already on top of a stack on the table
+                // and they don't already know what color color this card is
+                if (partnerCard.value == boardState.tableau.get(partnerCard.color) && !partnerAlreadyKnowsColor(partnerCard, i))
+                    //update my local version of what I know they know with the new color
+                    updateLocalPartnerCardColor(i, partnerCard.color);
+                return "COLORHINT " + partnerCard.color;
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        return null;
+    }
+
+    private String selfDisposeCard(List<Card> myCards, Board boardState) {
+        //Are there any duplicate cards?
+        //Do I have any cards that are lower than what is currently on the board for a given color?
+        //Were any cards previously disposed such that now it some cards are useless to have?
+        //TODO
+        return null;
+    }
+
+    private String selfCanPlayCard(List<Card> myCards, Board boardState) {
+        // If a previous hint has pointed to a single card
+        if (singleCardHintIndex != -1) {
+            int num = singleCardHintIndex;
+            singleCardHintIndex = -1; //reset
+            myCards.remove(num);
+            //if there's another available card to pull from, then "add" it to my local list of cards
+            if (boardState.deckSize > 1)
+                myCards.add(num, new Card(-1, -1));
+            // Play it! And put the new card in its place
+            return "PLAY " + num + " " + num;
+        }
+        // Otherwise, check to see if we can infer anything else to play
+
+        //Can I lay down a card on top of another (or start a new stack)?
+        //TODO
+
+        return null;
+    }
+
+    private String partnerGiveHint(Hand partnerHand, Board boardState) {
+        //Try to smartly give a hint. If we can hint such that only one card is pointed out, then GREAT! That's an instant play
+        //TODO
+        return null;
+    }
+
+    private String selfDisposeRandomCard(List<Card> myCards, Board boardState) {
+        //Try to be smart. If we can't, pick randomly
+        //TODO
+        return null;
+    }
+
 
     private int cardCount(int card) {
         if (card == 1) return 3;
@@ -177,4 +276,19 @@ public class Player {
         return 1;
     }
 
+    private boolean partnerAlreadyKnowsNumber(Card partnerCard, int index) {
+        return partnerCard.value == partnerCards.get(index).value;
+    }
+
+    private boolean partnerAlreadyKnowsColor(Card partnerCard, int index) {
+        return partnerCard.color == partnerCards.get(index).color;
+    }
+
+    private void updateLocalPartnerCardNumber(int index, int number) {
+        partnerCards.set(index, new Card(partnerCards.get(index).color, number));
+    }
+
+    private void updateLocalPartnerCardColor(int index, int color) {
+        partnerCards.set(index, new Card(color, partnerCards.get(index).value));
+    }
 }
