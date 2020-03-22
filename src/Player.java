@@ -8,25 +8,28 @@ import java.util.*;
  */
 public class Player {
     class UnknownCard {
-		public ArrayList<Integer> possibleValues = new ArrayList<>();
-		public ArrayList<Integer> possibleColors = new ArrayList<>();
+        public ArrayList<Integer> possibleValues = new ArrayList<>();
+        public ArrayList<Integer> possibleColors = new ArrayList<>();
 
-		public UnknownCard() {
-			possibleValues.add(1);
-			possibleValues.add(2);
-			possibleValues.add(3);
-			possibleValues.add(4);
-			possibleValues.add(5);
+        public UnknownCard() {
+            possibleValues.add(1);
+            possibleValues.add(2);
+            possibleValues.add(3);
+            possibleValues.add(4);
+            possibleValues.add(5);
 
-			possibleColors.add(Colors.RED);
-			possibleColors.add(Colors.YELLOW);
-			possibleColors.add(Colors.BLUE);
-			possibleColors.add(Colors.GREEN);
-			possibleColors.add(Colors.WHITE);
-		}
-	}
+            possibleColors.add(Colors.RED);
+            possibleColors.add(Colors.YELLOW);
+            possibleColors.add(Colors.BLUE);
+            possibleColors.add(Colors.GREEN);
+            possibleColors.add(Colors.WHITE);
+        }
+    }
+
     // Add whatever variables you want. You MAY NOT use static variables, or otherwise allow direct communication between
     // different instances of this class by any means; doing so will result in a score of 0.
+
+    // Used to keep track of what I know
     private List<Card> myCards;
     // Used to keep track of what I know my partner knows
     private List<Card> partnerCards;
@@ -167,9 +170,9 @@ public class Player {
     public String ask(int yourHandSize, Hand partnerHand, Board boardState) {
         String action;
 
-        //update myCards with any new knowledge that can be inferred from what is available
+        // Update myCards with any new knowledge that can be inferred from what is available
         selfInferNewKnowledge();
-        //update partnerCards with any new knowledge that can be inferred from what is available
+        // Update partnerCards with any new knowledge that can be inferred from what is available
         partnerInferNewKnowledge();
 
         // Check if partner has a card they really shouldn't throw out
@@ -229,7 +232,7 @@ public class Player {
                 // and they don't already know what number this card is
                 if (cardCount == 1 && !sharedCard && !partnerAlreadyKnowsNumber(partnerCard, i)) {
                     // Update my local version of what I know they know with the new value
-                    updateLocalPartnerCardNumber(i, partnerCard.value);
+                    updateLocalPartnerCardNumber(partnerHand, partnerCard.value);
                     return "NUMBERHINT " + partnerHand.get(i).value;
                 }
             } catch (Exception e) {
@@ -246,11 +249,15 @@ public class Player {
             try {
                 Card partnerCard = partnerHand.get(i);
                 // If partner contains another card of the same color that is already on the table
-                // and they don't already know what color color this card is
-                if (partnerCard.value <= boardState.tableau.get(partnerCard.color) && !partnerAlreadyKnowsColor(partnerCard, i))
+                // and they don't already know what color color this card is but DO know its number
+                if (partnerCard.value <= boardState.tableau.get(partnerCard.color)
+                        && !partnerAlreadyKnowsColor(partnerHand, partnerCard.color)
+                        && partnerAlreadyKnowsNumber(partnerHand, partnerCard.value)) {
                     //update my local version of what I know they know with the new color
-                    updateLocalPartnerCardColor(i, partnerCard.color);
-                return "COLORHINT " + partnerCard.color;
+                    updateLocalPartnerCardColor(partnerHand, partnerCard.color);
+                    return "COLORHINT " + partnerCard.color;
+                }
+
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -262,7 +269,7 @@ public class Player {
         //Do I have any cards that are already played on the table?
         for (int cardIndex = 0; cardIndex < myCards.size(); cardIndex++) {
             Card myCard = myCards.get(cardIndex);
-            if (myCard.color == 1) continue;
+            if (myCard.color == -1) continue;
             //if I contain a card that is the number or lower than what is already on the table
             if (myCard.value <= boardState.tableau.get(myCard.color)) {
                 myCards.remove(myCard);
@@ -304,11 +311,20 @@ public class Player {
             // Play it! And put the new card in its place
             return "PLAY " + num + " " + num;
         }
-        // Otherwise, check to see if we can infer anything else to play
 
         //Can I lay down a card on top of another (or start a new stack)?
-        //TODO
-
+        for (int cardIndex = 0; cardIndex < myCards.size(); cardIndex++) {
+            Card myCard = myCards.get(cardIndex);
+            if (myCard.color == -1 || myCard.value == -1) continue; // Incomplete information
+            // For a given color, if the table card is one less than what I have in my hand, PLAY IT
+            if (boardState.tableau.get(myCard.color) == myCard.value - 1) {
+                myCards.remove(cardIndex);
+                //if there's another available card to pull from, then "add" it to my local list of cards
+                if (boardState.deckSize > 1)
+                    myCards.add(cardIndex, new Card(-1, -1));
+                return "PLAY " + cardIndex + " " + cardIndex;
+            }
+        }
         return null;
     }
 
@@ -318,10 +334,14 @@ public class Player {
         return null;
     }
 
+    //We tried to be smart earlier. We couldn't. Pick a random card.
     private String selfDisposeRandomCard(List<Card> myCards, Board boardState) {
-        //Try to be smart. If we can't, pick randomly
-        //TODO
-        return null;
+        int index = new Random().nextInt(myCards.size());
+        myCards.remove(index);
+        //if there's another available card to pull from, then "add" it to my local list of cards
+        if (boardState.deckSize > 1)
+            myCards.add(index, new Card(-1, -1));
+        return "DISCARD " + index + " " + index;
     }
 
 
@@ -331,19 +351,83 @@ public class Player {
         return 1;
     }
 
-    private boolean partnerAlreadyKnowsNumber(Card partnerCard, int index) {
-        return partnerCard.value == partnerCards.get(index).value;
+    /**
+     * Checks to see if my partner knows about all cards that are a certain number
+     *
+     * @param partnerHand their current hand
+     * @param number      the number to check
+     * @return true if they know all cards with the number; false otherwise
+     */
+    private boolean partnerAlreadyKnowsNumber(Hand partnerHand, int number) {
+        for (int i = 0; i < partnerHand.size(); i++) {
+            try {
+                //Only look at the number that equals the parameter
+                if (partnerHand.get(i).value != number) continue;
+                if (partnerHand.get(i).value != partnerCards.get(i).value)
+                    return false;
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        return true;
     }
 
-    private boolean partnerAlreadyKnowsColor(Card partnerCard, int index) {
-        return partnerCard.color == partnerCards.get(index).color;
+    /**
+     * Checks to see if my partner knows about all cards that are a certain color
+     *
+     * @param partnerHand their current hand
+     * @param color       the color to check
+     * @return true if they know all cards with the color; false otherwise
+     */
+    private boolean partnerAlreadyKnowsColor(Hand partnerHand, int color) {
+        for (int i = 0; i < partnerHand.size(); i++) {
+            try {
+                //Only look at the color that equals the parameter
+                if (partnerHand.get(i).color != color) continue;
+                if (partnerHand.get(i).color != partnerCards.get(i).color)
+                    return false;
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        return true;
     }
 
-    private void updateLocalPartnerCardNumber(int index, int number) {
-        partnerCards.set(index, new Card(partnerCards.get(index).color, number));
+    /**
+     * Called whenever I tell my partner a hint about a number. This methods updates our local version of what I know
+     * my partner knows.
+     *
+     * @param partnerHand their current hand
+     * @param number      the number hint that was just given
+     */
+    private void updateLocalPartnerCardNumber(Hand partnerHand, int number) {
+        for (int i = 0; i < partnerHand.size(); i++) {
+            try {
+                if (partnerHand.get(i).value == number)
+                    partnerCards.set(i, new Card(partnerCards.get(i).color, number));
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
     }
 
-    private void updateLocalPartnerCardColor(int index, int color) {
-        partnerCards.set(index, new Card(color, partnerCards.get(index).value));
+    /**
+     * Called whenever I tell my partner a hint about a color. This methods updates our local version of what I know
+     * my partner knows.
+     *
+     * @param partnerHand their current hand
+     * @param color       their color hint that was just given
+     */
+    private void updateLocalPartnerCardColor(Hand partnerHand, int color) {
+        {
+            for (int i = 0; i < partnerHand.size(); i++) {
+                try {
+                    if (partnerHand.get(i).color == color)
+                        partnerCards.set(i, new Card(color, partnerCards.get(i).value));
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
     }
 }
