@@ -1,4 +1,5 @@
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * This is the only class you should edit.
@@ -13,6 +14,7 @@ public class Player {
     }
 
     class UnknownCard {
+        private String[] colorsMap = new String[]{"R", "Y", "B", "G", "W"};
         public ArrayList<Integer> possibleValues = new ArrayList<>();
         public ArrayList<Integer> possibleColors = new ArrayList<>();
 
@@ -49,13 +51,18 @@ public class Player {
         }
 
         public int onlyValue() {
-            if (possibleValues.size() != 1) return -1;
+            if (possibleValues.size() > 1) return -1;
             return possibleValues.get(0);
         }
 
         public int onlyColor() {
-            if (possibleColors.size() != 1) return -1;
+            if (possibleColors.size() > 1) return -1;
             return possibleColors.get(0);
+        }
+
+        public String toString() {
+            return possibleColors.stream().map((Integer c) -> colorsMap[c]).collect(Collectors.joining("")) +
+                    " " + possibleValues.stream().map(Object::toString).collect(Collectors.joining(""));
         }
     }
 
@@ -63,7 +70,7 @@ public class Player {
     // different instances of this class by any means; doing so will result in a score of 0.
 
     // Used to keep track of what I know
-    private List<UnknownCard> myCards;
+    public List<UnknownCard> myCards;
     // Used to keep track of what I know my partner knows
     private List<Card> partnerCards;
     //used to keep track of the single card that was hinted (which means it's immediately playable)
@@ -303,14 +310,12 @@ public class Player {
 
         for (int cardIndex : safeToPlay) {
             UnknownCard card = myCards.get(cardIndex);
-            List<Integer> axe = new ArrayList<>();
             for (int color = 0; color < 5; color++) {
                 int topCardIndex = boardState.tableau.get(color);
                 if (topCardIndex >= card.maxValue()) {
-                    axe.add(color);
+                    card.possibleColors.remove(Integer.valueOf(color));
                 }
             }
-            card.possibleColors.removeAll(axe);
         }
     }
 
@@ -417,6 +422,11 @@ public class Player {
                             cardCount--;
                     // If true, all instances of this card are discarded, so all cards higher than it don't matter
                     if (cardCount == 0) {
+                        myCards.remove(cardIndex);
+                        //if there's another available card to pull from, then "add" it to my local list of cards
+                        if (boardState.deckSize > 1)
+                            myCards.add(cardIndex, new UnknownCard());
+
                         debug("################# etner selfDisposeCard() - already discarded too much");
                         return "DISCARD " + cardIndex + " " + cardIndex;
                     }
@@ -559,7 +569,7 @@ public class Player {
     //We tried to be smart earlier. We couldn't. Pick a random card.
     private String selfDisposeRandomCard(List<UnknownCard> myCards, Board boardState, boolean mightGamble) {
         if (mightGamble && boardState.deckSize < boardState.numFuses) return null; //we might wanna gamble instead!
-        int index = new Random().nextInt(myCards.size());
+        int index = new Random(Driver.seed).nextInt(myCards.size());
         myCards.remove(index);
         //if there's another available card to pull from, then "add" it to my local list of cards
         if (boardState.deckSize > 1)

@@ -12,6 +12,8 @@ public class Hanabi {
 	private int otherPlayer;
 	private boolean chatty;
 
+	public Random rand = new Random(Driver.seed);
+
 	/**
 	 * The basic constructor.
 	 * @param chatty True to print out all useful information about the game; false for speed of play.
@@ -117,7 +119,6 @@ public class Hanabi {
 	 * Shuffle the deck using the Fisher-Yates shuffling algorithm.
 	 */
 	public void shuffle() {
-		Random rand = new Random();
 		for (int i = deck.size() - 1; i >= 1; i--) {
 			int j = rand.nextInt(i + 1);
 			Card temp = deck.get(j);
@@ -187,7 +188,9 @@ public class Hanabi {
 					System.out.println("The play is illegal; removing a fuse.");
 				}
 				System.out.println("Player 0 hand: " + hands.get(0));
+				System.out.println("Player 0 thinks: " + players.get(0).myCards);
 				System.out.println("Player 1 hand: " + hands.get(1));
+				System.out.println("Player 1 thinks: " + players.get(1).myCards);
 				System.out.println("Board state: \n" + boardState);
 			}
 			players.get(otherPlayer).tellPartnerPlay(oldHand, play, playIndex, draw, drawIndex, newHand, 
@@ -244,7 +247,9 @@ public class Hanabi {
 					System.out.println(" and cannot draw because the deck is empty.");
 				}
 				System.out.println("Player 0 hand: " + hands.get(0));
+				System.out.println("Player 0 thinks: " + players.get(0).myCards);
 				System.out.println("Player 1 hand: " + hands.get(1));
+				System.out.println("Player 1 thinks: " + players.get(1).myCards);
 				System.out.println("Board state: \n" + boardState);
 			}
 			players.get(otherPlayer).tellPartnerDiscard(oldHand, discard, discardIndex, draw, drawIndex, newHand, 
@@ -281,7 +286,9 @@ public class Hanabi {
 				System.out.println("Player " + currentPlayer + " hints the number " + number + " for indices "
 						+ indices);
 				System.out.println("Player 0 hand: " + hands.get(0));
+				System.out.println("Player 0 thinks: " + players.get(0).myCards);
 				System.out.println("Player 1 hand: " + hands.get(1));
+				System.out.println("Player 1 thinks: " + players.get(1).myCards);
 				System.out.println("Board state: \n" + boardState);
 			}
 			// And decrement hints.
@@ -326,7 +333,9 @@ public class Hanabi {
 				System.out.println("Player " + currentPlayer + " hints the color " + Colors.suitColor(color) +
 						" for indices " + indices);
 				System.out.println("Player 0 hand: " + hands.get(0));
+				System.out.println("Player 0 thinks: " + players.get(0).myCards);
 				System.out.println("Player 1 hand: " + hands.get(1));
+				System.out.println("Player 1 thinks: " + players.get(1).myCards);
 				System.out.println("Board state: \n" + boardState);
 			}
 			// And decrement hints.
