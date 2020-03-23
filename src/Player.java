@@ -316,7 +316,13 @@ public class Player {
                         // Decrement the number of cards left to play
                         cardCount--;
                 // Look through my own hand for the same card
-                boolean sharedCard = myCards.contains(partnerCard);
+                boolean sharedCard = false;
+                for (UnknownCard card : myCards) {
+                    if (card.onlyValue() != -1 && card.onlyValue() == partnerCard.value &&
+                        card.onlyColor() != -1 && card.onlyColor() == partnerCard.color) {
+                        sharedCard = true;
+                    }
+                }
 
                 // If there is exactly 1 card left playable and I don't have the card
                 // and they don't already know what number this card is
