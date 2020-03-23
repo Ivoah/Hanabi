@@ -9,7 +9,7 @@ import java.util.*;
 public class Player {
 
     private void debug(String str) {
-//        System.out.println(str);
+        System.out.println(str);
     }
 
     class UnknownCard {
@@ -155,10 +155,10 @@ public class Player {
      * @param boardState  The state of the board after the hint.
      */
     public void tellColorHint(int color, ArrayList<Integer> indices, Hand partnerHand, Board boardState) {
-//        for (int i = 0; i < myCards.size(); i++) {
-//            if (indices.contains(i)) myCards.get(i).setColor(color);
-//            else myCards.get(i).possibleColors.remove(Integer.valueOf(color));
-//        }
+        for (int i = 0; i < myCards.size(); i++) {
+            if (indices.contains(i)) myCards.get(i).setColor(color);
+            else myCards.get(i).possibleColors.remove(Integer.valueOf(color));
+        }
 //        // If true, then partner notified us of a single playable card
 //        if (indices.size() == 1) {
 //            safeToPlay.add(indices.get(0));
@@ -393,7 +393,7 @@ public class Player {
             for (int color : myCard.possibleColors) {
                 //if I contain a card that is the number or lower than what is already on the table
                 if (myCard.maxValue() <= boardState.tableau.get(color)) {
-                    myCards.remove(myCard);
+                    myCards.remove(cardIndex);
                     if (boardState.deckSize > 1)
                         myCards.add(cardIndex, new UnknownCard());
                     debug("#################enter selfDisposeCard() - already on table");
