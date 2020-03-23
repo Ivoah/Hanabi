@@ -13,6 +13,19 @@ public class Driver {
 //			total += score;
 //		}
 //		System.out.println("Final average: " + (total/1000.0));
+
+//		int total = 0;
+//		double blah = 0.0;
+//		for (int i = 0; i < 1000; i++) {
+//			Hanabi next = new Hanabi(false);
+//			int score = next.play();
+//			System.out.println("Game " + i + " score: " + score);
+//			if (score != 0) {
+//				blah += 1.0;
+//				total += score;
+//			}
+//		}
+//		System.out.println("Final average: " + (total/blah));
 	}
 
 }
