@@ -9,6 +9,8 @@ import java.util.stream.Collectors;
  */
 public class Player {
 
+    private int seed = new Random().nextInt();
+
     private void debug(String str) {
 //        System.out.println(str);
     }
@@ -558,7 +560,7 @@ public class Player {
         // Don't gamble if we have one fuse left
         if (boardState.numFuses == 1) return null;
 
-        int index = new Random(Driver.seed).nextInt(myCards.size());
+        int index = new Random(seed).nextInt(myCards.size());
         myCards.remove(index);
         if (boardState.deckSize > 1)
             myCards.add(index, new UnknownCard());
@@ -569,7 +571,7 @@ public class Player {
     //We tried to be smart earlier. We couldn't. Pick a random card.
     private String selfDisposeRandomCard(List<UnknownCard> myCards, Board boardState, boolean mightGamble) {
         if (mightGamble && boardState.deckSize < boardState.numFuses) return null; //we might wanna gamble instead!
-        int index = new Random(Driver.seed).nextInt(myCards.size());
+        int index = new Random(seed).nextInt(myCards.size());
         myCards.remove(index);
         //if there's another available card to pull from, then "add" it to my local list of cards
         if (boardState.deckSize > 1)
