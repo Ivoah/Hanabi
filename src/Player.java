@@ -175,8 +175,6 @@ public class Player {
         // If true, then partner possibly notified us of a single playable card
         if (indices.size() == 1) {
             System.out.println("GIVEN ONE ***NUMBER*** HINT");
-            System.out.println(indices.get(0));
-            System.out.println(number);
             // Verify there exists at least one card on the table that is one less than the given number
             boolean canPlaceCard = false;
             for (int topCard : boardState.tableau) {
@@ -435,7 +433,6 @@ public class Player {
                             unique = false;
                     }
                     if (unique) {
-                        System.out.println("I GOT HERE");
                         partnerCards.set(cardIndex, new Card(partnerCards.get(cardIndex).color, partnerCard.value));
                         System.out.println("################# enter partnerGiveHint() SINGLE HINT");
                         return "NUMBERHINT " + partnerCard.value;
