@@ -238,13 +238,13 @@ public class Player {
         if (action != null) return action;
 
         // Check if partner has a card they really shouldn't throw out
-        action = partnerShouldNotDisposeCard(partnerHand, boardState);
-        if (action != null) return action;
+//        action = partnerShouldNotDisposeCard(partnerHand, boardState);
+//        if (action != null) return action;
 
         // Check if partner has an identical card in color that is already on the table.
         // This helps avoid using up a fuse
-        action = partnerShouldDisposeCard(partnerHand, boardState);
-        if (action != null) return action;
+//        action = partnerShouldDisposeCard(partnerHand, boardState);
+//        if (action != null) return action;
 
         //Give a general hint
         action = partnerGiveHint(partnerHand, boardState);
