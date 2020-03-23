@@ -155,14 +155,15 @@ public class Player {
      * @param boardState  The state of the board after the hint.
      */
     public void tellColorHint(int color, ArrayList<Integer> indices, Hand partnerHand, Board boardState) {
-        for (int i = 0; i < myCards.size(); i++) {
-            if (indices.contains(i)) myCards.get(i).setColor(color);
-            else myCards.get(i).possibleColors.remove(Integer.valueOf(color));
-        }
-        // If true, then partner notified us of a single playable card
-        if (indices.size() == 1) {
-            safeToPlay.add(indices.get(0));
-        }
+//        for (int i = 0; i < myCards.size(); i++) {
+//            if (indices.contains(i)) myCards.get(i).setColor(color);
+//            else myCards.get(i).possibleColors.remove(Integer.valueOf(color));
+//        }
+//        // If true, then partner notified us of a single playable card
+//        if (indices.size() == 1) {
+//            safeToPlay.add(indices.get(0));
+//            debug("SAFE TO PLAY LIST AFTER ADDING COLOR: " + safeToPlay.toString());
+//        }
 
     }
 
@@ -193,7 +194,7 @@ public class Player {
             }
             if (canPlaceCard) {
                 safeToPlay.add(indices.get(0));
-            debug("SAFE TO PLAY LIST AFTER ADDING: " + safeToPlay.toString());
+                debug("SAFE TO PLAY LIST AFTER ADDING NUMBER: " + safeToPlay.toString());
             }
         }
     }
@@ -225,6 +226,10 @@ public class Player {
         // Update myCards with any new knowledge that can be inferred from what is available
         selfInferNewKnowledge(partnerHand, boardState);
 
+        // Try to play a card
+        action = selfCanPlayCard(myCards, boardState);
+        if (action != null) return action;
+
         // Check if partner has a card they really shouldn't throw out
         action = partnerShouldNotDisposeCard(partnerHand, boardState);
         if (action != null) return action;
@@ -234,21 +239,22 @@ public class Player {
         action = partnerShouldDisposeCard(partnerHand, boardState);
         if (action != null) return action;
 
-        // Try to dispose a card first to get back a hint if we know we absolutely can
-        action = selfDisposeCard(myCards, boardState);
-        if (action != null) return action;
-
-        // Try to play a card
-        action = selfCanPlayCard(myCards, boardState);
-        if (action != null) return action;
-
         //Give a general hint
         action = partnerGiveHint(partnerHand, boardState);
         if (action != null) return action;
 
-        // Fallback. Get rid of a random card
-        return selfDisposeRandomCard(myCards, boardState);
+        // Try to dispose a card first to get back a hint if we know we absolutely can
+        action = selfDisposeCard(myCards, boardState);
+        if (action != null) return action;
 
+        action = selfDisposeRandomCard(myCards, boardState, true);
+        if (action != null) return action;
+
+        action = gambleCard(myCards, boardState);
+        if (action != null) return action;
+
+        // Fallback. Get rid of a random card
+        return selfDisposeRandomCard(myCards, boardState, false);
 
         // Provided for testing purposes only; delete.
         // Your method should construct and return a String without user input.
@@ -308,10 +314,21 @@ public class Player {
 
     private String partnerShouldNotDisposeCard(Hand partnerHand, Board boardState) {
         if (boardState.numHints == 0) return null;
-        for (int i = 0; i < partnerHand.size(); i++) {
+        for (int cardIndex = 0; cardIndex < partnerHand.size(); cardIndex++) {
             try {
-                Card partnerCard = partnerHand.get(i);
+                Card partnerCard = partnerHand.get(cardIndex);
                 int cardCount = cardCount(partnerCard.value); //get the total number of cards that exist for this number
+
+                // Check if a card lower is fully discarded first, which means we can't play this card
+                for (int number = 1; number <= partnerCard.value; number++) {
+                    int cardsAvailable = cardCount(number);
+                    for (Card discard : boardState.discards) {
+                        if (discard.color != partnerCard.color) continue;
+                        if (discard.value == number)
+                            cardsAvailable--;
+                    }
+                    if (cardsAvailable == 0) return null;
+                }
 
                 // If the same card is in the discarded pile
                 for (Card discardCard : boardState.discards)
@@ -322,7 +339,7 @@ public class Player {
                 boolean sharedCard = false;
                 for (UnknownCard card : myCards) {
                     if (card.onlyValue() != -1 && card.onlyValue() == partnerCard.value &&
-                        card.onlyColor() != -1 && card.onlyColor() == partnerCard.color) {
+                            card.onlyColor() != -1 && card.onlyColor() == partnerCard.color) {
                         sharedCard = true;
                     }
                 }
@@ -333,7 +350,7 @@ public class Player {
                     // Update my local version of what I know they know with the new value
                     updateLocalPartnerCardNumber(partnerHand, partnerCard.value);
                     debug("################# partnerShouldNotDisposeCard()");
-                    return "NUMBERHINT " + partnerHand.get(i).value;
+                    return "NUMBERHINT " + partnerHand.get(cardIndex).value;
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -367,6 +384,7 @@ public class Player {
     }
 
     private String selfDisposeCard(List<UnknownCard> myCards, Board boardState) {
+        if (boardState.deckSize < boardState.numFuses) return null; //we wanna gamble instead!
         //Do I have any cards that are already played on the table?
         for (int cardIndex = 0; cardIndex < myCards.size(); cardIndex++) {
             UnknownCard myCard = myCards.get(cardIndex);
@@ -521,13 +539,24 @@ public class Player {
                 return "COLORHINT " + mostCommonColor;
             }
         }
-
-        //TODO
         return null;
     }
 
+    private String gambleCard(List<UnknownCard> myCards, Board boardState) {
+        // Don't gamble if we have one fuse left
+        if (boardState.numFuses == 1) return null;
+
+        int index = new Random().nextInt(myCards.size());
+        myCards.remove(index);
+        if (boardState.deckSize > 1)
+            myCards.add(index, new UnknownCard());
+        debug("################# enter gambleCard()");
+        return "PLAY " + index + " " + index;
+    }
+
     //We tried to be smart earlier. We couldn't. Pick a random card.
-    private String selfDisposeRandomCard(List<UnknownCard> myCards, Board boardState) {
+    private String selfDisposeRandomCard(List<UnknownCard> myCards, Board boardState, boolean mightGamble) {
+        if (mightGamble && boardState.deckSize < boardState.numFuses) return null; //we might wanna gamble instead!
         int index = new Random(Driver.seed).nextInt(myCards.size());
         myCards.remove(index);
         //if there's another available card to pull from, then "add" it to my local list of cards
