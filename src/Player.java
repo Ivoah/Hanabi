@@ -155,7 +155,11 @@ public class Player {
             else myCards.get(i).possibleColors.remove(Integer.valueOf(color));
         }
         // If true, then partner notified us of a single playable card
-        if (indices.size() == 1) safeToPlay.add(indices.get(0));
+        if (indices.size() == 1) {
+            // Set its only color to the given color
+            myCards.get(indices.get(0)).possibleColors = new ArrayList<>(color);
+            safeToPlay.add(indices.get(0));
+        }
 
     }
 
@@ -184,8 +188,12 @@ public class Player {
                     break;
                 }
             }
-            if (canPlaceCard) safeToPlay.add(indices.get(0));
-            System.out.println("RESULT: " + safeToPlay.toString());
+            if (canPlaceCard) {
+                // Set its only value to the given number
+                myCards.get(indices.get(0)).possibleValues = new ArrayList<>(number);
+                safeToPlay.add(indices.get(0));
+            System.out.println("SAFE TO PLAY LIST AFTER ADDING: " + safeToPlay.toString());
+            }
         }
     }
 
@@ -284,6 +292,18 @@ public class Player {
                 }
                 card.possibleValues.removeAll(axe);
             }
+        }
+
+        for (int cardIndex : safeToPlay) {
+            UnknownCard card = myCards.get(cardIndex);
+            List<Integer> axe = new ArrayList<>();
+            for (int color = 0; color < 5; color++) {
+                int topCardIndex = boardState.tableau.get(color);
+                if (topCardIndex >= card.maxValue()) {
+                    axe.add(color);
+                }
+            }
+            card.possibleColors.removeAll(axe);
         }
     }
 
