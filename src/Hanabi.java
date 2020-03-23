@@ -247,7 +247,9 @@ public class Hanabi {
 					System.out.println(" and cannot draw because the deck is empty.");
 				}
 				System.out.println("Player 0 hand: " + hands.get(0));
+				System.out.println("Player 0 thinks: " + players.get(0).myCards);
 				System.out.println("Player 1 hand: " + hands.get(1));
+				System.out.println("Player 1 thinks: " + players.get(1).myCards);
 				System.out.println("Board state: \n" + boardState);
 			}
 			players.get(otherPlayer).tellPartnerDiscard(oldHand, discard, discardIndex, draw, drawIndex, newHand, 
@@ -284,7 +286,9 @@ public class Hanabi {
 				System.out.println("Player " + currentPlayer + " hints the number " + number + " for indices "
 						+ indices);
 				System.out.println("Player 0 hand: " + hands.get(0));
+				System.out.println("Player 0 thinks: " + players.get(0).myCards);
 				System.out.println("Player 1 hand: " + hands.get(1));
+				System.out.println("Player 1 thinks: " + players.get(1).myCards);
 				System.out.println("Board state: \n" + boardState);
 			}
 			// And decrement hints.
@@ -329,7 +333,9 @@ public class Hanabi {
 				System.out.println("Player " + currentPlayer + " hints the color " + Colors.suitColor(color) +
 						" for indices " + indices);
 				System.out.println("Player 0 hand: " + hands.get(0));
+				System.out.println("Player 0 thinks: " + players.get(0).myCards);
 				System.out.println("Player 1 hand: " + hands.get(1));
+				System.out.println("Player 1 thinks: " + players.get(1).myCards);
 				System.out.println("Board state: \n" + boardState);
 			}
 			// And decrement hints.

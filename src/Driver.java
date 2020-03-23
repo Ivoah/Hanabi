@@ -5,7 +5,7 @@ public class Driver {
 	public static int seed = rand.nextInt();
 
 	public static void main(String[] args) {
-//		seed = 1466826826;
+		seed = 1494450377;
 		Hanabi game = new Hanabi(true);
 		game.play();
 

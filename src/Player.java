@@ -43,7 +43,7 @@ public class Player {
         }
 
         public int maxValue() {
-            if (possibleValues.size() == 0) return -1;
+//            if (possibleValues.size() == 0) return -1;
             return Collections.max(possibleValues);
         }
 
