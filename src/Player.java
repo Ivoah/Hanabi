@@ -238,13 +238,13 @@ public class Player {
         if (action != null) return action;
 
         // Check if partner has a card they really shouldn't throw out
-        action = partnerShouldNotDisposeCard(partnerHand, boardState);
-        if (action != null) return action;
+//        action = partnerShouldNotDisposeCard(partnerHand, boardState);
+//        if (action != null) return action;
 
         // Check if partner has an identical card in color that is already on the table.
         // This helps avoid using up a fuse
-        action = partnerShouldDisposeCard(partnerHand, boardState);
-        if (action != null) return action;
+//        action = partnerShouldDisposeCard(partnerHand, boardState);
+//        if (action != null) return action;
 
         //Give a general hint
         action = partnerGiveHint(partnerHand, boardState);
@@ -357,6 +357,12 @@ public class Player {
                     // Update my local version of what I know they know with the new value
                     updateLocalPartnerCardNumber(partnerHand, partnerCard.value);
                     debug("################# partnerShouldNotDisposeCard()");
+                    // If this is true, there is another color one number less and the other player might get confused
+                    for (int color = 0; color < 5; color++) {
+                        if (color == partnerCard.color) continue;
+                        if (boardState.tableau.get(color) == partnerCard.value - 1)
+                            return "COLORHINT " + partnerHand.get(cardIndex).color;
+                    }
                     return "NUMBERHINT " + partnerHand.get(cardIndex).value;
                 }
             } catch (Exception e) {
