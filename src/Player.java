@@ -156,8 +156,6 @@ public class Player {
         }
         // If true, then partner notified us of a single playable card
         if (indices.size() == 1) {
-            // Set its only color to the given color
-            myCards.get(indices.get(0)).possibleColors = new ArrayList<>(color);
             safeToPlay.add(indices.get(0));
         }
 
@@ -189,8 +187,6 @@ public class Player {
                 }
             }
             if (canPlaceCard) {
-                // Set its only value to the given number
-                myCards.get(indices.get(0)).possibleValues = new ArrayList<>(number);
                 safeToPlay.add(indices.get(0));
             System.out.println("SAFE TO PLAY LIST AFTER ADDING: " + safeToPlay.toString());
             }
