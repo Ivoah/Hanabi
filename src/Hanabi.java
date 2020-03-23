@@ -188,7 +188,9 @@ public class Hanabi {
 					System.out.println("The play is illegal; removing a fuse.");
 				}
 				System.out.println("Player 0 hand: " + hands.get(0));
+				System.out.println("Player 0 thinks: " + players.get(0).myCards);
 				System.out.println("Player 1 hand: " + hands.get(1));
+				System.out.println("Player 1 thinks: " + players.get(1).myCards);
 				System.out.println("Board state: \n" + boardState);
 			}
 			players.get(otherPlayer).tellPartnerPlay(oldHand, play, playIndex, draw, drawIndex, newHand, 

@@ -1,4 +1,5 @@
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * This is the only class you should edit.
@@ -13,6 +14,7 @@ public class Player {
     }
 
     class UnknownCard {
+        private String[] colorsMap = new String[]{"R", "Y", "B", "G", "W"};
         public ArrayList<Integer> possibleValues = new ArrayList<>();
         public ArrayList<Integer> possibleColors = new ArrayList<>();
 
@@ -58,13 +60,18 @@ public class Player {
             if (possibleColors.size() != 1) return -1;
             return possibleColors.get(0);
         }
+
+        public String toString() {
+            return possibleColors.stream().map((Integer c) -> colorsMap[c]).collect(Collectors.joining("")) +
+                    " " + possibleValues.stream().map(Object::toString).collect(Collectors.joining(""));
+        }
     }
 
     // Add whatever variables you want. You MAY NOT use static variables, or otherwise allow direct communication between
     // different instances of this class by any means; doing so will result in a score of 0.
 
     // Used to keep track of what I know
-    private List<UnknownCard> myCards;
+    public List<UnknownCard> myCards;
     // Used to keep track of what I know my partner knows
     private List<Card> partnerCards;
     //used to keep track of the single card that was hinted (which means it's immediately playable)
