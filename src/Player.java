@@ -62,7 +62,7 @@ public class Player {
     // Used to keep track of what I know my partner knows
     private List<Card> partnerCards;
     //used to keep track of the single card that was hinted (which means it's immediately playable)
-    private Queue<Integer> safeToPlay = new LinkedList<>();
+    private Queue<Integer> safeToPlay;
 
 
     // Delete this once you actually write your own version of the class.
@@ -78,6 +78,7 @@ public class Player {
             myCards.add(new UnknownCard());
             partnerCards.add(new Card(-1, -1));
         }
+        safeToPlay = new LinkedList<>();
     }
 
     /**
@@ -171,9 +172,23 @@ public class Player {
             if (indices.contains(i)) myCards.get(i).setValue(number);
             else myCards.get(i).possibleValues.remove(Integer.valueOf(number));
         }
-        // If true, then partner notified us of a single playable card, assuming there exists a card on the table that is one less
-        if (indices.size() == 1 && boardState.tableau.get(indices.get(0)) == indices.get(0) - 1)
-            safeToPlay.add(indices.get(0));
+        // If true, then partner possibly notified us of a single playable card
+        if (indices.size() == 1) {
+            System.out.println("GIVEN ONE ***NUMBER*** HINT");
+            System.out.println(indices.get(0));
+            System.out.println(number);
+            // Verify there exists at least one card on the table that is one less than the given number
+            boolean canPlaceCard = false;
+            for (int topCard : boardState.tableau) {
+                System.out.println("top card: " + topCard);
+                if (topCard == number - 1) {
+                    canPlaceCard = true;
+                    break;
+                }
+            }
+            if (canPlaceCard) safeToPlay.add(indices.get(0));
+            System.out.println("RESULT: " + safeToPlay.toString());
+        }
     }
 
     /**
@@ -294,6 +309,7 @@ public class Player {
                 if (cardCount == 1 && !sharedCard && !partnerAlreadyKnowsNumber(partnerHand, partnerCard.value)) {
                     // Update my local version of what I know they know with the new value
                     updateLocalPartnerCardNumber(partnerHand, partnerCard.value);
+                    System.out.println("################# partnerShouldNotDisposeCard()");
                     return "NUMBERHINT " + partnerHand.get(i).value;
                 }
             } catch (Exception e) {
@@ -316,6 +332,7 @@ public class Player {
                         && partnerAlreadyKnowsNumber(partnerHand, partnerCard.value)) {
                     //update my local version of what I know they know with the new color
                     updateLocalPartnerCardColor(partnerHand, partnerCard.color);
+                    System.out.println("################# enter partnerShouldDisposeCard()");
                     return "COLORHINT " + partnerCard.color;
                 }
 
@@ -336,6 +353,7 @@ public class Player {
                     myCards.remove(myCard);
                     if (boardState.deckSize > 1)
                         myCards.add(cardIndex, new UnknownCard());
+                    System.out.println("#################enter selfDisposeCard() - already on table");
                     return "DISCARD " + cardIndex + " " + cardIndex;
                 }
             }
@@ -355,8 +373,10 @@ public class Player {
                         if (discard.equals(card))
                             cardCount--;
                     // If true, all instances of this card are discarded, so all cards higher than it don't matter
-                    if (cardCount == 0)
+                    if (cardCount == 0) {
+                        System.out.println("################# etner selfDisposeCard() - already discarded too much");
                         return "DISCARD " + cardIndex + " " + cardIndex;
+                    }
                 }
             }
         }
@@ -366,12 +386,14 @@ public class Player {
     private String selfCanPlayCard(List<UnknownCard> myCards, Board boardState) {
         // If a previous hint has pointed to a single card
         if (safeToPlay.size() > 0) {
+            System.out.println("Safe to play list: " + safeToPlay.toString());
             int num = safeToPlay.remove();
             myCards.remove(num);
             //if there's another available card to pull from, then "add" it to my local list of cards
             if (boardState.deckSize > 1)
                 myCards.add(num, new UnknownCard());
             // Play it! And put the new card in its place
+            System.out.println("################# enter selfCanPlayCard() - SAFE TO PLAY");
             return "PLAY " + num + " " + num;
         }
 
@@ -390,6 +412,7 @@ public class Player {
                 //if there's another available card to pull from, then "add" it to my local list of cards
                 if (boardState.deckSize > 1)
                     myCards.add(cardIndex, new UnknownCard());
+                System.out.println("################# enter selfCanPlayCard() - REGULAR");
                 return "PLAY " + cardIndex + " " + cardIndex;
             }
         }
@@ -412,7 +435,9 @@ public class Player {
                             unique = false;
                     }
                     if (unique) {
+                        System.out.println("I GOT HERE");
                         partnerCards.set(cardIndex, new Card(partnerCards.get(cardIndex).color, partnerCard.value));
+                        System.out.println("################# enter partnerGiveHint() SINGLE HINT");
                         return "NUMBERHINT " + partnerCard.value;
                     }
                 }
@@ -432,14 +457,16 @@ public class Player {
                 try {
                     // If it's the same color and the partner doesn't know the number of the card
                     if (partnerHand.get(cardIndex).value == number
-                    && partnerCards.get(cardIndex).value != number)
+                            && partnerCards.get(cardIndex).value != number)
                         numberCount++;
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
-            if (numberCount > greatestNumberCount)
+            if (numberCount > greatestNumberCount) {
+                greatestNumberCount = numberCount;
                 mostCommonNumber = number;
+            }
         }
         for (int color = 0; color < 5; color++) {
             int colorCount = 0;
@@ -447,24 +474,28 @@ public class Player {
                 try {
                     // If it's the same color and the partner doesn't know the color of the card
                     if (partnerHand.get(cardIndex).color == color
-                    && partnerCards.get(cardIndex).color != color) {
+                            && partnerCards.get(cardIndex).color != color) {
                         colorCount++;
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
-            if (colorCount > greatestColorCount)
+            if (colorCount > greatestColorCount) {
+                greatestColorCount = colorCount;
                 mostCommonColor = color;
+            }
         }
 
-        if (mostCommonNumber > 1 || mostCommonColor > 1) {
+        if (greatestNumberCount > 1 || greatestColorCount > 1) {
             // Prioritize number of color
-            if (mostCommonNumber >= mostCommonColor) {
+            if (greatestNumberCount >= greatestColorCount) {
                 updateLocalPartnerCardNumber(partnerHand, mostCommonNumber);
+                System.out.println("################# enter partnerGiveHint() MULTI-HINT NUMBER");
                 return "NUMBERHINT " + mostCommonNumber;
             } else {
                 updateLocalPartnerCardColor(partnerHand, mostCommonColor);
+                System.out.println("################# enter partnerGiveHint() MULTI-HINT COLOR");
                 return "COLORHINT " + mostCommonColor;
             }
         }
@@ -480,6 +511,7 @@ public class Player {
         //if there's another available card to pull from, then "add" it to my local list of cards
         if (boardState.deckSize > 1)
             myCards.add(index, new UnknownCard());
+        System.out.println("################# enter selfDisposeRandomCard()");
         return "DISCARD " + index + " " + index;
     }
 
