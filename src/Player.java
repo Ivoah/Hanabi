@@ -10,7 +10,7 @@ import java.util.stream.Collectors;
 public class Player {
 
     private void debug(String str) {
-        System.out.println(str);
+//        System.out.println(str);
     }
 
     class UnknownCard {
@@ -558,7 +558,7 @@ public class Player {
         // Don't gamble if we have one fuse left
         if (boardState.numFuses == 1) return null;
 
-        int index = new Random().nextInt(myCards.size());
+        int index = new Random(Driver.seed).nextInt(myCards.size());
         myCards.remove(index);
         if (boardState.deckSize > 1)
             myCards.add(index, new UnknownCard());
