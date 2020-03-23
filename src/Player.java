@@ -41,6 +41,7 @@ public class Player {
         }
 
         public int maxValue() {
+            if (possibleValues.size() == 0) return -1;
             return Collections.max(possibleValues);
         }
 
@@ -49,12 +50,12 @@ public class Player {
         }
 
         public int onlyValue() {
-            if (possibleValues.size() > 1) return -1;
+            if (possibleValues.size() != 1) return -1;
             return possibleValues.get(0);
         }
 
         public int onlyColor() {
-            if (possibleColors.size() > 1) return -1;
+            if (possibleColors.size() != 1) return -1;
             return possibleColors.get(0);
         }
     }
