@@ -49,12 +49,12 @@ public class Player {
         }
 
         public int onlyValue() {
-            if (possibleValues.size() != 1) return -1;
+            if (possibleValues.size() > 1) return -1;
             return possibleValues.get(0);
         }
 
         public int onlyColor() {
-            if (possibleColors.size() != 1) return -1;
+            if (possibleColors.size() > 1) return -1;
             return possibleColors.get(0);
         }
     }
@@ -297,14 +297,12 @@ public class Player {
 
         for (int cardIndex : safeToPlay) {
             UnknownCard card = myCards.get(cardIndex);
-            List<Integer> axe = new ArrayList<>();
             for (int color = 0; color < 5; color++) {
                 int topCardIndex = boardState.tableau.get(color);
                 if (topCardIndex >= card.maxValue()) {
-                    axe.add(color);
+                    card.possibleColors.remove(Integer.valueOf(color));
                 }
             }
-            card.possibleColors.removeAll(axe);
         }
     }
 
@@ -530,7 +528,7 @@ public class Player {
 
     //We tried to be smart earlier. We couldn't. Pick a random card.
     private String selfDisposeRandomCard(List<UnknownCard> myCards, Board boardState) {
-        int index = new Random().nextInt(myCards.size());
+        int index = new Random(Driver.seed).nextInt(myCards.size());
         myCards.remove(index);
         //if there's another available card to pull from, then "add" it to my local list of cards
         if (boardState.deckSize > 1)

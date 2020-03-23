@@ -12,6 +12,8 @@ public class Hanabi {
 	private int otherPlayer;
 	private boolean chatty;
 
+	public Random rand = new Random(Driver.seed);
+
 	/**
 	 * The basic constructor.
 	 * @param chatty True to print out all useful information about the game; false for speed of play.
@@ -117,7 +119,6 @@ public class Hanabi {
 	 * Shuffle the deck using the Fisher-Yates shuffling algorithm.
 	 */
 	public void shuffle() {
-		Random rand = new Random();
 		for (int i = deck.size() - 1; i >= 1; i--) {
 			int j = rand.nextInt(i + 1);
 			Card temp = deck.get(j);
