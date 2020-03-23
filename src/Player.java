@@ -43,7 +43,6 @@ public class Player {
         }
 
         public int maxValue() {
-//            if (possibleValues.size() == 0) return -1;
             return Collections.max(possibleValues);
         }
 
@@ -52,12 +51,12 @@ public class Player {
         }
 
         public int onlyValue() {
-            if (possibleValues.size() != 1) return -1;
+            if (possibleValues.size() > 1) return -1;
             return possibleValues.get(0);
         }
 
         public int onlyColor() {
-            if (possibleColors.size() != 1) return -1;
+            if (possibleColors.size() > 1) return -1;
             return possibleColors.get(0);
         }
 
@@ -423,6 +422,11 @@ public class Player {
                             cardCount--;
                     // If true, all instances of this card are discarded, so all cards higher than it don't matter
                     if (cardCount == 0) {
+                        myCards.remove(cardIndex);
+                        //if there's another available card to pull from, then "add" it to my local list of cards
+                        if (boardState.deckSize > 1)
+                            myCards.add(cardIndex, new UnknownCard());
+
                         debug("################# etner selfDisposeCard() - already discarded too much");
                         return "DISCARD " + cardIndex + " " + cardIndex;
                     }
